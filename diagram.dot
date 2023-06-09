@@ -1,0 +1,95 @@
+digraph ArchitectureDiagram {
+  rankdir="LR" // lay out elements in diagram left to rigth
+  splines=ortho // only horizontal or vertical edges
+  style="dotted"
+  compound=true; // allows to end arrows on clusters
+
+  node [
+    shape="box"
+    height="0.75"
+    width="1.5"
+    style="filled"
+    fillcolor="lightgrey"
+  ]
+
+  // Alignment layer
+  // - add an invisible column to the left with elements defining rows
+  // - you can specify the row height per row
+  subgraph alignment {
+    graph [rank="same"]
+    edge [style="invisible" arrowhead="none"]
+    node [style="invisible" width="0.1"]
+    row2[height="1.5"]
+    row3[height="2"]
+    row4[height=""]
+    row1 -> row2 -> row3 -> row4
+  }
+
+
+  // Frontend App
+  subgraph row1 {
+    frontendApp [label="Frontend App" fillcolor="cornflowerblue" URL="#frontend-app"]
+  }
+
+  // Backend Servers
+  subgraph row2 {
+    node [fillcolor="brown2"]
+    server1 [label="Backend Server" URL="#backend-server"]
+
+    subgraph cluster_cron {
+      graph [label="Background jobs"]
+      server2 [label="Workers" URL="#workers"]
+      server3 [label="Jobs" URL="#jobs"]
+        server2 -> server3
+        server3 -> server2
+    }
+
+    server1 -> server2
+  }
+
+  // Database
+  subgraph row3 {
+    edge [style="invisible" arrowhead="none"]
+    node [width="0.5" fillcolor="forestgreen"]
+
+    // This is an invisible dot that allows to:
+    // - align the database in column 2
+    // - route the Backend Server to External providers edge through this column
+    row3column1 [style="invisible" shape="point" width="0" height="0"]
+    
+    database [label="Database" shape="cylinder" URL="#database"]
+    row3column1 -> database
+  }
+
+
+  // External Providers
+  subgraph cluster_row4 {
+    graph [label="External providers"]
+    node [shape="ellipse"]
+    edge [style="invisible" arrowhead="none"]
+    provider1 [label="Amazon S3"]
+    provider2 [label="External\nProvider"]
+    provider3 [label="External\nProvider 2"]
+
+    provider1 -> provider2 -> provider3
+  }
+
+  // Alignment
+  row1 -> frontendApp [style="invisible" arrowhead="none"]
+  row2 -> server1 [style="invisible" arrowhead="none"]
+  row3 -> row3column1[style="invisible" arrowhead="none"]
+  row4 -> provider1[style="invisible" arrowhead="none"]
+
+  // Connections
+  // - within each row we use edges with constraints to force elements being left to right
+  // - across rows we use edges with `constraint="false"` so elements aren't pulled out of their columns
+  frontendApp -> server1 [constraint="false"]
+  frontendApp -> provider1 [constraint="false"]
+  
+  server1 -> database [constraint="false"]
+  server1 -> row3column1 [constraint="false" arrowhead=none]
+  row3column1 -> provider1 [constraint="false" lhead=cluster_row4]
+
+  server3 -> database[constraint="false"]
+  server3 -> provider3 [constraint="false"]
+}
